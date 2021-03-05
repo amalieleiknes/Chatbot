@@ -2,14 +2,24 @@
 """
 This needs to run at all times to keep the chatroom running.
 
-    cd Desktop\Skole\Vår2021\Datanettverk og skytjenester\Portfolio1\Chatbot
+
 
 py Server.py 12345
 py Client.py localhost 12345 joan
+
+Problemer:
+- jeg kan ikke ha input() funksjonen i samme som "ny tråd", for da
+krever den at input skriver flere ganger på rad. Denne må utenfor i egen tråd
+og så må den tråden kjøre, og så kan de andre trådene kjøre, og så den igjen.
+
 """
+#       cd C:\Users\Eier\Desktop\Skole\Vår2021\Datsky\Portfolio1\Chatbot1
+
 
 import _thread
 import threading
+from threading import *
+import threading.Barrier
 import socket
 import time
 
@@ -18,10 +28,10 @@ port = 12345  # int(sys.argv[1])
 
 # Create a TCP/IP socket, exactly the same way as in the client
 server_socket = socket.socket(type=socket.SOCK_STREAM)
-#server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
 
 # bind means to reserve a local socket. Server will also be listening for answers
 server_socket.bind((addr, port))
+server_socket.listen(5)
 
 username = input("Please enter your name: ")
 
@@ -60,10 +70,6 @@ def forward_to_rest(conn, msg):
         if c != conn:
             try:
                 c.send(msg)
-                incoming_data = c.recv(1024)
-                incoming_data = incoming_data.decode('utf-8')
-                print(incoming_data)
-
             except:
                 c.close()
                 connections_list.remove(c)
@@ -79,7 +85,7 @@ def receive_from_all():
             print(data)
 
             # server forwards msg from client to other clients  after receiving
-            #forward_to_rest(c, data)
+            forward_to_rest(c, data)
 
 
 #  this code is run in parallell for every client
@@ -88,21 +94,18 @@ def client_connection_thread(client_conn):
     client_conn.send(bytes(username.encode('utf-8')))
 
     while True:
-        try:
-            # mottar klientsvaret én gang (sendt først fra server input til klient)
-            msg = client_conn.recv(1024)
-            msg = msg.decode('utf-8')
-            print(msg)
-
-            forward_to_rest(client_conn, msg)
+        # Server receives answer from client
+        receive_from_all()
 
 
-        except:
-            continue
+mid_convo = True
 
 
 def server_thread():
-    while True:
+    # new_connection()
+    try:
+        time.sleep(2)
+        new_thread_thread.Barrier.
         # The users input is saved in msg
         msg = str(input("You: "))
 
@@ -113,44 +116,32 @@ def server_thread():
             # if not ended, send message to clients
             send_to_all(msg)
 
-            receive_from_all()
-
-            for i in thread_list:
-                i.join()
-            time.sleep(2)
+            time.sleep(3)
+    except:
+        print("?")
 
 
-thread_list = []
+_thread.start_new_thread(server_thread, ())
 
-# starting the server-code
-server_thread = threading.Thread(target=server_thread())
 
-while True:
-    server_socket.listen(3)
+def new_thread():
     # starting with accepting any incoming connections
-    client_connection, addr = server_socket.accept()
-
-    # waiting for convo to finish before new bot enters
-    server_thread.join()
+    client_connection, address = server_socket.accept()
 
     if client_connection not in connections_list:
         # appends the list of connections with new conn
         connections_list.append(client_connection)
 
         # connecting to client and starting new thread for them
-        thread = threading.Thread(target=client_connection_thread(client_connection))
-        thread_list.append(thread)
-        thread.start()
+        _thread.start_new_thread(client_connection_thread, (client_connection,))
 
-# printing out on all screens that new client is connected
-        # print("\nChatbot connected from: ", addr)
-        msg = ("\nChatbot connected from: " + str(addr) + "\n")
+        print("\nChatbot connected from: ", address)
+        address = ("\nChatbot connected from addr:" + str(address) + "\n")
+        forward_to_rest(client_connection, address)
 
-        msg = bytes(msg.encode('utf-8'))
 
-        for c in connections_list:
-            if c != client_connection:
-                try:
-                    c.send(msg)
-                except:
-                    continue
+new_thread_thread = threading.Thread(target=new_thread, args=())
+new_thread_thread.start()
+new_thread_thread.join(5)
+
+# _thread.start_new_thread(new_thread, ())

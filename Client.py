@@ -10,6 +10,10 @@ You can choose between the following chatbots:
     3. Jake (sad guy)
     4. Jimmy ()
     5. Java ()
+
+No bots have entered name. Must fix with input at beginning of client??
+Must ensure one of these five names have been entered
+
 """
 
 import socket
@@ -33,6 +37,7 @@ print("Client is running ...\t", addr, ":", port, "\t Botname:", bot)
 
 # Joan is a simple chatbot who cannot do so much
 def joan(action, greeting):
+    time.sleep(2)
     string = ""
     if greeting != "":
         string = greeting
@@ -97,7 +102,7 @@ def bots_all(action, greeting, joke):
         string = java(action, greeting, joke)
 
     else:
-        string = "No bots have entered name. Must fix with input at beginning of client"
+        string = ""
         # if none of these bots are chosen,
         # there will be a null response and the client is ended
 
@@ -143,7 +148,7 @@ def analyze(userinput):
     # finding response from bot present
     string = bots_all(action, greeting, joke)
 
-    # returning suggested action and bots name        
+    # returning suggested action and bots name
     return string
 
 
@@ -180,7 +185,6 @@ while True:
                 print(name + ": " + msg)
 
                 response = analyze(msg)
-                time.sleep(1)
                 print("You: " + response)
 
                 # formatting response so botname is attached, then encoding it
