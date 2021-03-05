@@ -18,8 +18,6 @@ og så må den tråden kjøre, og så kan de andre trådene kjøre, og så den i
 
 import _thread
 import threading
-from threading import *
-import threading.Barrier
 import socket
 import time
 
@@ -98,33 +96,30 @@ def client_connection_thread(client_conn):
         receive_from_all()
 
 
-mid_convo = True
-
-
 def server_thread():
-    # new_connection()
-    try:
-        time.sleep(2)
-        new_thread_thread.Barrier.
-        # The users input is saved in msg
-        msg = str(input("You: "))
+    while True:
+        # new_connection()
+        try:
+            time.sleep(2)
+            # The users input is saved in msg
+            msg = str(input("You: "))
 
-        # user says bye = connection is ended:
-        if msg == "bye":
-            kill_all_connections()
-        else:
-            # if not ended, send message to clients
-            send_to_all(msg)
+            # user says bye = connection is ended:
+            if msg == "bye":
+                kill_all_connections()
+            else:
+                # if not ended, send message to clients
+                send_to_all(msg)
 
-            time.sleep(3)
-    except:
-        print("?")
+                time.sleep(3)
+        except:
+            print("?")
 
 
 _thread.start_new_thread(server_thread, ())
 
 
-def new_thread():
+while True:
     # starting with accepting any incoming connections
     client_connection, address = server_socket.accept()
 
@@ -139,9 +134,3 @@ def new_thread():
         address = ("\nChatbot connected from addr:" + str(address) + "\n")
         forward_to_rest(client_connection, address)
 
-
-new_thread_thread = threading.Thread(target=new_thread, args=())
-new_thread_thread.start()
-new_thread_thread.join(5)
-
-# _thread.start_new_thread(new_thread, ())
