@@ -6,12 +6,6 @@ This needs to run at all times to keep the chatroom running.
 
 py Server.py 12345
 py Client.py localhost 12345 joan
-
-Problemer:
-- jeg kan ikke ha input() funksjonen i samme som "ny tråd", for da
-krever den at input skriver flere ganger på rad. Denne må utenfor i egen tråd
-og så må den tråden kjøre, og så kan de andre trådene kjøre, og så den igjen.
-
 """
 
 import _thread
@@ -24,7 +18,7 @@ port = 12345  # int(sys.argv[1])
 
 # Create a TCP/IP socket, exactly the same way as in the client
 server_socket = socket.socket(type=socket.SOCK_STREAM)
-server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+#server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
 
 # bind means to reserve a local socket. Server will also be listening for answers
 server_socket.bind((addr, port))
@@ -110,7 +104,6 @@ def client_connection_thread(client_conn):
 def server_thread():
     while True:
         # The users input is saved in msg
-        time.sleep(2)
         msg = str(input("You: "))
 
         # user says bye = connection is ended:
@@ -123,16 +116,22 @@ def server_thread():
             receive_from_all()
 
             for i in thread_list:
-                thread.join()
+                i.join()
             time.sleep(2)
 
 
 thread_list = []
 
+# starting the server-code
+server_thread = threading.Thread(target=server_thread())
+
 while True:
-    server_socket.listen(5)
+    server_socket.listen(3)
     # starting with accepting any incoming connections
     client_connection, addr = server_socket.accept()
+
+    # waiting for convo to finish before new bot enters
+    server_thread.join()
 
     if client_connection not in connections_list:
         # appends the list of connections with new conn
@@ -143,10 +142,15 @@ while True:
         thread_list.append(thread)
         thread.start()
 
-        # starting the server-code
-        server_thread()
-
 # printing out on all screens that new client is connected
-        print("\nChatbot connected from: ", addr)
-        address = ("\nChatbot connected from addr:" + str(addr) + "\n")
-        forward_to_rest(client_connection, address)
+        # print("\nChatbot connected from: ", addr)
+        msg = ("\nChatbot connected from: " + str(addr) + "\n")
+
+        msg = bytes(msg.encode('utf-8'))
+
+        for c in connections_list:
+            if c != client_connection:
+                try:
+                    c.send(msg)
+                except:
+                    continue
