@@ -24,6 +24,7 @@ port = 12345  # int(sys.argv[1])
 
 # Create a TCP/IP socket, exactly the same way as in the client
 server_socket = socket.socket(type=socket.SOCK_STREAM)
+server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
 
 # bind means to reserve a local socket. Server will also be listening for answers
 server_socket.bind((addr, port))
@@ -65,6 +66,10 @@ def forward_to_rest(conn, msg):
         if c != conn:
             try:
                 c.send(msg)
+                incoming_data = c.recv(1024)
+                incoming_data = incoming_data.decode('utf-8')
+                print(incoming_data)
+
             except:
                 c.close()
                 connections_list.remove(c)
@@ -80,7 +85,7 @@ def receive_from_all():
             print(data)
 
             # server forwards msg from client to other clients  after receiving
-            forward_to_rest(c, data)
+            #forward_to_rest(c, data)
 
 
 #  this code is run in parallell for every client
@@ -90,42 +95,58 @@ def client_connection_thread(client_conn):
 
     while True:
         try:
+            # mottar klientsvaret én gang (sendt først fra server input til klient)
+            msg = client_conn.recv(1024)
+            msg = msg.decode('utf-8')
+            print(msg)
 
-            # The users input is saved in msg
-            # denne kan ikke være her. da starter input i hver tråd og d blir feil.
-            # egen tråd for server?
-            time.sleep(2)
-            msg = str(input("You: "))
+            forward_to_rest(client_conn, msg)
 
-            # user says bye = connection is ended:
-            if msg == "bye":
-                kill_all_connections()
-            else:
-                # if not ended, send message to clients
-                send_to_all(msg)
-
-                # Server receives answer from client
-                receive_from_all()
 
         except:
             continue
 
 
-server_socket.listen(5)
+def server_thread():
+    while True:
+        # The users input is saved in msg
+        time.sleep(2)
+        msg = str(input("You: "))
 
+        # user says bye = connection is ended:
+        if msg == "bye":
+            kill_all_connections()
+        else:
+            # if not ended, send message to clients
+            send_to_all(msg)
+
+            receive_from_all()
+
+            for i in thread_list:
+                thread.join()
+            time.sleep(2)
+
+
+thread_list = []
 
 while True:
+    server_socket.listen(5)
     # starting with accepting any incoming connections
     client_connection, addr = server_socket.accept()
 
     if client_connection not in connections_list:
-
         # appends the list of connections with new conn
         connections_list.append(client_connection)
 
         # connecting to client and starting new thread for them
-        _thread.start_new_thread(client_connection_thread, (client_connection,))
+        thread = threading.Thread(target=client_connection_thread(client_connection))
+        thread_list.append(thread)
+        thread.start()
 
+        # starting the server-code
+        server_thread()
+
+# printing out on all screens that new client is connected
         print("\nChatbot connected from: ", addr)
         address = ("\nChatbot connected from addr:" + str(addr) + "\n")
         forward_to_rest(client_connection, address)
