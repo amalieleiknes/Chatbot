@@ -13,7 +13,7 @@ krever den at input skriver flere ganger på rad. Denne må utenfor i egen tråd
 og så må den tråden kjøre, og så kan de andre trådene kjøre, og så den igjen.
 
 """
-#       cd C:\Users\Eier\Desktop\Skole\Vår2021\Datsky\Portfolio1\Chatbot1
+#       cd C:\Users\Eier\Desktop\Skole\Vår2021\Datsky\Chatbot
 
 
 import _thread
@@ -36,12 +36,13 @@ username = input("Please enter your name: ")
 print("Server is running... Wait for a chatbot to join your room")
 
 # making a list of clients, currently with only server_socket as connection
-connections_list = []
+clients_connections_LIST = []
+informed_connections_LIST = []
 
 
 # killing all connections, first the clients and lastly the server
 def kill_all_connections():
-    for c in connections_list:
+    for c in clients_connections_LIST:
         if c != server_socket:
             c.close()
     server_socket.close()
@@ -52,29 +53,30 @@ def send_to_all(msg):
     msg = str(username + ":::" + msg)
     msg = msg.encode('utf-8')
 
-    for c in connections_list:
+    for c in clients_connections_LIST:
         try:
             c.send(bytes(msg))
+            informed_connections_LIST.append(c)
         except:
             c.close()
-            connections_list.remove(c)
+            clients_connections_LIST.remove(c)
 
 
 # forwarding message received from one client to the rest of the clients through server
 def forward_to_rest(conn, msg):
     msg = bytes(msg.encode('utf-8'))
 
-    for c in connections_list:
+    for c in clients_connections_LIST:
         if c != conn:
             try:
                 c.send(msg)
             except:
                 c.close()
-                connections_list.remove(c)
+                clients_connections_LIST.remove(c)
 
 
 def receive_from_all():
-    for c in connections_list:
+    for c in clients_connections_LIST:
         data = c.recv(1024)
         if not data:
             c.close()
@@ -111,6 +113,7 @@ def server_thread():
                 # if not ended, send message to clients
                 send_to_all(msg)
 
+
                 time.sleep(3)
         except:
             print("?")
@@ -123,14 +126,21 @@ while True:
     # starting with accepting any incoming connections
     client_connection, address = server_socket.accept()
 
-    if client_connection not in connections_list:
+    if client_connection not in clients_connections_LIST:
         # appends the list of connections with new conn
-        connections_list.append(client_connection)
+        clients_connections_LIST.append(client_connection)
 
         # connecting to client and starting new thread for them
         _thread.start_new_thread(client_connection_thread, (client_connection,))
 
-        print("\nChatbot connected from: ", address)
+        """
+        Problem med å skrive ut at chatbot er connected.
+        Vil gjerne ha med dette da det gjør chatten mer responsiv,
+        men om jeg ikke finner en løsning er det bedre å kutte det ut
+        
+        """
+
+        # print("\nChatbot connected from: ", address)
         address = ("\nChatbot connected from addr:" + str(address) + "\n")
         forward_to_rest(client_connection, address)
 
