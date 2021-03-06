@@ -7,9 +7,8 @@ where different chatbots will answer questions from input on server.
 You can choose between the following chatbots:
     1. Joan (a nice person)
     2. Joker (loves to tell jokes)
-    3. Jake (sad guy)
+    3. Jake (hates joker's jokes)
     4. Jimmy ()
-    5. Java ()
 
 No bots have entered name. Must fix with input at beginning of client??
 Must ensure one of these five names have been entered
@@ -17,184 +16,178 @@ Must ensure one of these five names have been entered
 """
 
 import socket
-import time
 import sys
 import random
+import time
 
 addr = str(sys.argv[1])
 port = int(sys.argv[2])
 bot = sys.argv[3]
 bot = bot.lower()
 
-client_socket = socket.socket(type=socket.SOCK_STREAM)
-client_socket.connect((addr, port))
-
 # making a list of different bots
-bots_list = ["joan", "joker", "jake", "jimmy", "java"]
+bots_list = ["joan", "joker", "jake", "jimmy"]
 
-print("Client is running ...\t", addr, ":", port, "\t Botname:", bot)
+# only connecting if the bot inputted is available
+if bot not in bots_list:
+    print("Bot named is not available. Please try with one of the following botnames:")
+    for i in bots_list:
+        print(i)
 
-
-# Joan is a simple chatbot who cannot do so much
-def joan(action, greeting):
-    time.sleep(2)
-    string = ""
-    if greeting != "":
-        string = greeting
-
-    if action == "":
-        string += "?"
-    else:
-        string += "Ooo I would love to go for a " + action
-
-    return string
+# telling the client which bots are available for connecting
+else:
+    client_socket = socket.socket(type=socket.SOCK_STREAM)
+    client_socket.connect((addr, port))
+    print("Client is running ...\t", addr, ":", port, "\t Botname:", bot)
+    # receiving the username so that we know who needs answers
+    username = client_socket.recv(1024)
+    username = username.decode('utf-8')
 
 
-# Joker is the chatbot-clown who can do a bit more than Joan
-def joker(joke):
-    if joke == "knock":
-        string = "Knock Knock"
-    elif joke == "who's there" or joke == "who is there":
-        string = "Cows go"
-    elif joke == "cows go who":
-        string = "Cows go moo!"
-    elif joke == "cows go moo":
-        string = "You ruined my joke:("
-    elif joke == "children":
-        string = "All the children were planned, except Jake. His parents made a mistake."
-    else:
-        string = "I don't know anymore jokes"
-    return string
-
-
-def jake(action, joke):
-    if joke == "cows go":
-        string = "Cows go moo"
-    else:
-        string = "I'm Jake"
-    return string
-
-
-def jimmy(action):
-    string = "hi there"
-    return string
-
-
-def java(action, greeting, joke):
-    string = "hello i don't like python"
-    return string
-
-
-def bots_all(action, greeting, joke):
-    if bot == "joan":
-        string = joan(action, greeting)
-
-    elif bot == "joker":
-        string = joker(joke)
-
-    elif bot == "jake":
-        string = jake(action, joke)
-
-    elif bot == "jimmy":
-        string = jimmy(action)
-
-    elif bot == "java":
-        string = java(action, greeting, joke)
-
-    else:
+    def joan(action, greeting):
         string = ""
-        # if none of these bots are chosen,
-        # there will be a null response and the client is ended
+        greetings_response = ["howdy ", "Hi there fellow humanbeing! ", "holla! ",
+                              "what's up", "So nice to finally meet a cool person",
+                              "*nods*", "Can I help you with anything?"]
 
-    return string
+        if action == "" and greeting == "":
+            string = "What?"
 
+        if greeting != "":
+            string = random.choice(greetings_response)
 
-def analyze(userinput):
-    userinput = userinput.lower()
+        if action == "joke":
+            string = "I don't know any jokes, sorry. But Joker knows 'em all."
 
-    action = ""
-    joke = ""
-    greeting = ""
-
-    greetings_input = ["hi", "hello", "hey"]
-    greetings_response = ["howdy ", "Hi there fellow humanbeing! ", "holla! ", "what's up", "So nice to finally meet a cool person" , "*nods*"]
-
-    # making a list of actions that chatbots understand
-    actions_input = ["annoy", "build", "create", "drive", "explore", "find", "help", "jog"]
-    actions_suggestions = []
-
-    # making a list of jokes
-    jokes = ["knock knock", "cows go who", "cows go moo", "who's there", "who is there" "all the children"]
-
-    # finding if there is a greeting
-    for g in greetings_input:
-        if g in userinput:
-            greeting = random.choice(greetings_response)
-            break
-
-    # finding the verb for what the user wants to do
-    for a in actions_input:
-        if a in userinput:
+        elif action != "":
             time.sleep(1)
-            action = a
-            break
+            string += "Ooo I would love to go for a " + action
 
-    # looking for jokes
-    for j in jokes:
-        if j in userinput:
-            joke = j
-            break
-
-    # finding response from bot present
-    string = bots_all(action, greeting, joke)
-
-    # returning suggested action and bots name
-    return string
+        return string
 
 
-# receiving the username so that we know who needs answers
-username = client_socket.recv(1024)
-username = username.decode('utf-8')
+    def joker(action):
+        jokes_list = ["All the children were planned, except Jake. His parents made a mistake.",
+                      "All the children got to have cake, except Jake. His mother forgot to bake.",
+                      "I don't know anymore jokes"]
 
-# in a loop as long as server(user) is online/ until they say bye
-while True:
-    new_connection_info = "Chatbot connected from addr:"
+        if action == "joke":
+            string = random.choice(jokes_list)
 
-    # data saves what the user is asking about
-    data = client_socket.recv(1024)
-    data = data.decode('utf-8')
+        else:
+            string = "I don't want to talk about anything else but jokes. " \
+                     "So just ask me to tell a joke"
 
-    if not data:
-        client_socket.close()
+        return string
 
-    # if connection is
-    elif new_connection_info in data:
-        print(data)
 
-    else:
+    def jake(action):
+        string = "I'm Jake"
 
-        # if trying fails, it means it is not from userinput
-        try:
-            # making a list over who sent the msg + contents of msg
-            name_and_msg_list = data.split(':::')
-            name = name_and_msg_list[0]
-            msg = name_and_msg_list[1]
+        if action == "joke":
+            string = "Please don't ask Joker about a joke, he is so mean to me :("
+        return string
 
-            # if the user sent the message, we want the bot to respond
-            if name == username:
-                print(name + ": " + msg)
 
-                response = analyze(msg)
-                print("You: " + response)
+    def jimmy(action):
+        if action[-1] == "e":
+            string = "I do not want to {}." + action
+        else:
+            string = "Let's not do some " + action + "ing, please. "
 
-                # formatting response so botname is attached, then encoding it
-                response = bot + ": " + response
-                response = response.encode('utf-8')
+        actions_suggestions = ["answer", "break", "clean", "doodle", "erase"]
+        suggestions = random.choice(actions_suggestions)
+        string += "Could we rather " + str(suggestions) + "?"
+        return string
 
-                # sending response back to server
-                client_socket.send(response)
-        except:
-            check_bot_name = data.split(':')
-            if check_bot_name[0] != bot:
-                print(data)
 
+    def bots_all(action, greeting):
+        string = ""
+
+        if bot == "joan":
+            string = joan(action, greeting)
+
+        elif bot == "joker":
+            string = joker(action)
+
+        elif bot == "jake":
+            string = jake(action)
+
+        elif bot == "jimmy":
+            string = jimmy(action)
+
+        return string
+
+
+    def analyze(userinput):
+        userinput = userinput.lower()
+
+        action = ""
+        greeting = ""
+
+        greetings_input = ["hi", "hello", "hey", "what\'s up", "how are you"]
+
+        # making a list of actions that chatbots understand
+        actions_input = ["tell", "ask", "create", "drive", "explore", "find", "help",
+                         "jog", "walk", "work", "call", "make", "use", "joke"]
+
+        # finding if there is a greeting
+        for g in greetings_input:
+            if g in userinput:
+                greeting = g
+                break
+
+        # finding the verb for what the user wants to do
+        for a in actions_input:
+            if a in userinput:
+                action = a
+                break
+
+        # finding response from bot present
+        string = bots_all(action, greeting)
+
+        # returning suggested action and bots name
+        return string
+
+
+    # in a loop as long as server(user) is online/ until they say bye
+    while True:
+        # string equal to what is printed when a new client connects
+        new_connection_info = "New chatbot connected from: "
+
+        # data saves what the user is asking about
+        data = client_socket.recv(1024)
+        data = data.decode('utf-8')
+
+        if not data:
+            client_socket.close()
+
+        # if connection is
+        elif new_connection_info in data:
+            print(data)
+
+        else:
+            # if trying fails, it means it is not from user input
+            try:
+                # making a list over who sent the msg + contents of msg
+                name_and_msg_list = data.split(':::')
+                name = name_and_msg_list[0]
+                msg = name_and_msg_list[1]
+
+                # if the user sent the message, we want the bot to respond
+                if name == username:
+                    print(name + ": " + msg)
+
+                    response = analyze(msg)
+                    print("You: " + response)
+
+                    # formatting response so botname is attached, then encoding it
+                    response = bot + ": " + response
+                    response = response.encode('utf-8')
+
+                    # sending response back to server
+                    client_socket.send(response)
+            except:
+                check_bot_name = data.split(':')
+                if check_bot_name[0] != bot:
+                    print(data)

@@ -2,27 +2,18 @@
 """
 This needs to run at all times to keep the chatroom running.
 
-
-
-py Server.py 12345
-py Client.py localhost 12345 joan
-
-Problemer:
-- jeg kan ikke ha input() funksjonen i samme som "ny tråd", for da
-krever den at input skriver flere ganger på rad. Denne må utenfor i egen tråd
-og så må den tråden kjøre, og så kan de andre trådene kjøre, og så den igjen.
+To exit the chat and end all connections, input "bye".
 
 """
 #       cd C:\Users\Eier\Desktop\Skole\Vår2021\Datsky\Chatbot
 
-
 import _thread
-import threading
 import socket
 import time
+import sys
 
 addr = 'localhost'
-port = 12345  # int(sys.argv[1])
+port = int(sys.argv[1])
 
 # Create a TCP/IP socket, exactly the same way as in the client
 server_socket = socket.socket(type=socket.SOCK_STREAM)
@@ -31,13 +22,14 @@ server_socket = socket.socket(type=socket.SOCK_STREAM)
 server_socket.bind((addr, port))
 server_socket.listen(5)
 
-username = input("Please enter your name: ")
+username = input("\nPlease enter your name: ")
+print("")
 
-print("Server is running... Wait for a chatbot to join your room")
+print("Welcome to the chat! Please wait for a chatbot to connect before asking questions.")
 
 # making a list of clients, currently with only server_socket as connection
 clients_connections_LIST = []
-informed_connections_LIST = []
+new_connection = []
 
 
 # killing all connections, first the clients and lastly the server
@@ -56,7 +48,6 @@ def send_to_all(msg):
     for c in clients_connections_LIST:
         try:
             c.send(bytes(msg))
-            informed_connections_LIST.append(c)
         except:
             c.close()
             clients_connections_LIST.remove(c)
@@ -77,50 +68,74 @@ def forward_to_rest(conn, msg):
 
 def receive_from_all():
     for c in clients_connections_LIST:
-        data = c.recv(1024)
-        if not data:
-            c.close()
-        else:
-            data = data.decode('utf-8')
-            print(data)
+        try:
+            data = c.recv(1024)
+            if not data:
+                c.close()
+            else:
+                data = data.decode('utf-8')
+                print(data)
 
-            # server forwards msg from client to other clients  after receiving
-            forward_to_rest(c, data)
+                # server forwards msg from client to other clients  after receiving
+                forward_to_rest(c, data)
+        except:
+            c.close()
+            clients_connections_LIST.remove(c)
 
 
 #  this code is run in parallell for every client
 def client_connection_thread(client_conn):
-    # sending username to new client as first thing. Only done once.
-    client_conn.send(bytes(username.encode('utf-8')))
+    try:
+        # sending username to new client as first thing. Only done once.
+        client_conn.send(bytes(username.encode('utf-8')))
 
-    while True:
-        # Server receives answer from client
-        receive_from_all()
+        while True:
+            # Server receives answer from client
+            receive_from_all()
+    except:
+        print("\nNo chatbots connected, please wait for a new connection.\n")
+
+
+def check_for_new_connections():
+    # printing the new connection and then removing from list
+    print("\nNew chatbot connected from: " + str(new_connection[0]) + "\n")
+    new_connection.clear()
 
 
 def server_thread():
     while True:
-        # new_connection()
-        try:
-            time.sleep(2)
-            # The users input is saved in msg
-            msg = str(input("You: "))
+        if len(clients_connections_LIST) > 0:
+            try:
+                if len(new_connection) > 0:
+                    check_for_new_connections()
+                    # The users input is saved in msg
+                    msg = str(input("You: "))
 
-            # user says bye = connection is ended:
-            if msg == "bye":
-                kill_all_connections()
-            else:
-                # if not ended, send message to clients
-                send_to_all(msg)
+                    # user says bye = connection is ended:
+                    if msg == "bye":
+                        kill_all_connections()
+                    else:
 
+                        if len(new_connection) > 0:
+                            check_for_new_connections()
+                            time.sleep(1)
 
-                time.sleep(3)
-        except:
-            print("?")
+                        # if not ended, send message to clients
+                        send_to_all(msg)
 
+                        # wait for all bots to send their message and think
+                        time.sleep(4)
+
+            except:
+                print("Exception: Failure in server-thread.")
+                server_socket.close()
+
+        # bør ha med en tidsbegrensning - hvis ikke nye chatbots joiner vil serveren lukkes?
+        else:
+            server_socket.close()
+            continue
 
 _thread.start_new_thread(server_thread, ())
-
 
 while True:
     # starting with accepting any incoming connections
@@ -133,14 +148,9 @@ while True:
         # connecting to client and starting new thread for them
         _thread.start_new_thread(client_connection_thread, (client_connection,))
 
-        """
-        Problem med å skrive ut at chatbot er connected.
-        Vil gjerne ha med dette da det gjør chatten mer responsiv,
-        men om jeg ikke finner en løsning er det bedre å kutte det ut
-        
-        """
+        # adding the new connection to list so that server can print out separately
+        new_connection.append(address)
 
-        # print("\nChatbot connected from: ", address)
-        address = ("\nChatbot connected from addr:" + str(address) + "\n")
+        # printing out new connection at the other clients
+        address = ("\nNew chatbot connected from: " + str(address) + "\n")
         forward_to_rest(client_connection, address)
-
