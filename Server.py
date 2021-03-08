@@ -2,6 +2,13 @@
 """
 This needs to run at all times to keep the chatroom running.
 To exit the chat and end all connections, input "bye".
+
+Ting jeg mangler/ kanskje bør se mer på:
+- den nyere versjonen av threading
+- reuseport
+- tidsbegrensning for hvor lenge en bruker skal kunne være pålogget på server
+  uten å skrive inn noe input.
+
 """
 #       cd C:\Users\Eier\Desktop\Skole\Vår2021\Datsky\Chatbot
 
