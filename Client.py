@@ -45,8 +45,8 @@ else:
     username = username.decode('utf-8')
 
     # sending the bots name to server
-
-
+    botname = bot.encode('utf-8')
+    client_socket.send(bytes(botname))
 
     def joan(action, greeting):
         string = ""
@@ -160,16 +160,17 @@ else:
     # in a loop as long as server(user) is online/ until they say bye
     while True:
         # string equal to what is printed when a new client connects
-        new_connection_info = "New chatbot connected from: "
+        new_connection_info = "New chatbot connected from:"
 
         # data saves what the user is asking about
         data = client_socket.recv(1024)
         data = data.decode('utf-8')
 
+        # if there is no data from server, the connection should be closed
         if not data:
             client_socket.close()
 
-        # if connection is
+        # if received data is info about a new connection, do not analyze it - only print
         elif new_connection_info in data:
             print(data)
 
