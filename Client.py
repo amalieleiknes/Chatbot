@@ -39,9 +39,13 @@ else:
     client_socket = socket.socket(type=socket.SOCK_STREAM)
     client_socket.connect((addr, port))
     print("Client is running ...\t", addr, ":", port, "\t Botname:", bot)
-    # receiving the username so that we know who needs answers
+
+    # receiving the users name from server
     username = client_socket.recv(1024)
     username = username.decode('utf-8')
+
+    # sending the bots name to server
+
 
 
     def joan(action, greeting):
@@ -82,22 +86,25 @@ else:
 
 
     def jake(action):
-        string = "I'm Jake"
+        random_strings = ["I'm Jake", "I am Jake", "You are not Jake", "Jake is my favorite word"]
+        string = random.choice(random_strings)
 
         if action == "joke":
-            string = "Please don't ask Joker about a joke, he is so mean to me :("
+            string = "Please don't ask Joker to tell a joke, he is so mean to me :("
         return string
 
 
     def jimmy(action):
-        if action[-1] == "e":
-            string = "I do not want to {}." + action
-        else:
+        if action != "":
             string = "Let's not do some " + action + "ing, please. "
+        else:
+            string = "Don't you know what you wanna do? "
 
-        actions_suggestions = ["answer", "break", "clean", "doodle", "erase"]
+        actions_suggestions = ["answer", "break", "clean", "doodle", "bake"]
         suggestions = random.choice(actions_suggestions)
+
         string += "Could we rather " + str(suggestions) + "?"
+
         return string
 
 
