@@ -5,8 +5,6 @@ This needs to run at all times to keep the chatroom running.
 To exit the chat and end all connections, input 'bye'.
 To end only one connection, type 'bye [botname]'
 """
-#       cd C:\Users\Eier\Desktop\Skole\Vår2021\Datsky\Chatbot
-#       py Client.py localhost 12345 joan
 
 import _thread
 import time
@@ -177,6 +175,7 @@ else:
                         except:
                             print("Failed to update conn_LIST)")
 
+            # removes only the client connection that is provided
             def kill_bot_connection(m):
                 for i in clients_names_LIST:
                     if i.botname in m:
@@ -187,11 +186,10 @@ else:
             def server_thread():
                 i = 0
                 while 1:
-                    if len(new_connections_LIST) > 0:
-                        check_for_new_connections()
+                    # if there are any clients connected, do the following
                     if len(clients_connections_LIST) > 0:
                         try:
-                            # checking for new and disconnected clients
+                            # checking for new and disconnected clients to give user a notice
                             if len(new_connections_LIST) > 0:
                                 check_for_new_connections()
                             if len(disconnected_LIST) > 0:

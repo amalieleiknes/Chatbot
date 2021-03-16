@@ -60,14 +60,14 @@ else:
         client_socket.send(bytes(botname))
 
 
-        def joan(action, greeting):
+        def joan(action, greeting, goodbye):
             string = ""
-            greetings_response = ["howdy ", "Hi there fellow humanbeing! ", "holla! ",
-                                  "what's up", "So nice to finally meet a cool person",
-                                  "*nods*", "Can I help you with anything?"]
+            greetings_response = ["howdy ... ", "Hi there fellow humanbeing! ", "holla! ",
+                                  "what's up !? ", "So nice to finally meet a cool person. ",
+                                  "*nods* ", "Can I help you with anything? "]
 
             if action == "" and greeting == "":
-                string = "What?"
+                string = "What? "
 
             if greeting != "":
                 string = random.choice(greetings_response)
@@ -77,6 +77,9 @@ else:
 
             elif action != "":
                 string += "Ooo I would love to go for a " + action + " :D"
+
+            if goodbye != "":
+                string += "I am not leaving :("
 
             time.sleep(1)
 
@@ -126,11 +129,11 @@ else:
             return string
 
 
-        def bots_all(action, greeting, bad_act):
+        def bots_all(action, greeting, bad_act, goodbye):
             string = ""
 
             if bot == "joan":
-                string = joan(action, greeting)
+                string = joan(action, greeting, goodbye)
 
             elif bot == "joker":
                 string = joker(action)
@@ -150,6 +153,10 @@ else:
             action = ""
             greeting = ""
             bad_action = ""
+            goodbye = ""
+
+            # array of goodbyes
+            gb = ["bye", "goodbye", "see you soon"]
 
             greetings_input = ["hi", "hello", "hey", "what\'s up", "how are you",
                                "good morning", "good evening", "good afternoon"]
@@ -159,6 +166,9 @@ else:
                              "jog", "walk", "work", "call", "make", "use", "joke"]
 
             bad_actions_input = ["hate", "kill", "spit", "break", "sabotage"]
+
+            if "bye" in userinput:
+                goodbye = random.choice(gb)
 
             # finding if there is a greeting
             for g in greetings_input:
@@ -172,14 +182,14 @@ else:
                     action = a
                     break
 
-            # finding if the user asks about a nice action
+            # finding if the user asks about a bad action
             for a in bad_actions_input:
                 if a in userinput:
                     bad_action = a
                     break
 
             # finding response from bot connected
-            string = bots_all(action, greeting, bad_action)
+            string = bots_all(action, greeting, bad_action, goodbye)
 
             # returning suggested action
             return string
@@ -216,6 +226,7 @@ else:
 
                         # if user said goodbye to the chatbot, we end the connection
                         if "bye" in msg and str(bot) in msg:
+                            print("OMG was I just kicked out???")
                             time.sleep(1)
                             client_socket.close()
 
