@@ -2,8 +2,8 @@
 """
 A short explanation of functions:
 This needs to run at all times to keep the chatroom running.
-To exit the chat and end all connections, input "bye".
-To end only one connection, type "bye [botname]"
+To exit the chat and end all connections, input 'bye'.
+To end only one connection, type 'bye [botname]'
 """
 #       cd C:\Users\Eier\Desktop\Skole\Vår2021\Datsky\Chatbot
 #       py Client.py localhost 12345 joan
@@ -54,14 +54,13 @@ else:
         else:
             print("")
 
-            print("Welcome to the chat! Please wait for a chatbot to connect before asking questions. \n"
+            print("Welcome to the chat!\n"
                   "The chatbot will log off if you use more than 40 seconds to type a message.")
 
-            # making a list of clients, currently with only server_socket as connection
-            clients_connections_LIST = []
-            clients_names_LIST = []
-            new_connections_LIST = []
-            disconnected_LIST = []
+            clients_connections_LIST = []  # making a list of clients, currently empty
+            clients_names_LIST = []  # list over names of each connected client
+            new_connections_LIST = []  # list over new connections
+            disconnected_LIST = []  # list over disconnected clients
 
             # making a class to be able to make a list of bot-objects
             class bots:
@@ -90,7 +89,7 @@ else:
                         try:
                             clients_connections_LIST.remove(c)
                         except:
-                            print("")
+                            print("Failure in send_to_all-method")
 
             # forwarding message received from one client to the rest of the clients through server
             def forward_to_rest(conn, msg):
@@ -101,12 +100,11 @@ else:
                         try:
                             c.send(msg)
                         except socket.error:
-                            disconnected_LIST.append(c)
-                            c.close()
                             try:
                                 clients_connections_LIST.remove(c)
-                            except:
-                                print("")
+                                c.close()
+                            except ValueError:
+                                print("Failure in forward_to_rest-method")
 
             # receiving message from all the other clients
             def receive_from_all():
@@ -122,10 +120,10 @@ else:
                             # server forwards msg from client to other clients  after receiving
                             forward_to_rest(c, data)
                     except socket.error:
-                        disconnected_LIST.append(c)
-                        c.close()
                         try:
+                            disconnected_LIST.append(c)
                             clients_connections_LIST.remove(c)
+                            c.close()
                         except:
                             print("")
 
@@ -140,12 +138,13 @@ else:
                     name = name.decode('utf-8')
                     clients_names_LIST.append(bots(name, client_conn))
 
-                    while True:
+                    while len(clients_connections_LIST) > 0:
                         # Server receives answer from client
                         receive_from_all()
+
                 except socket.error:
                     time.sleep(1)
-                    print("\nNo chatbots connected, please wait for a new connection.\n")
+                    print("Failure in client_connection_thread-method")
 
             # checking if there has been any new connections since last time checked
             def check_for_new_connections():
@@ -160,8 +159,8 @@ else:
                 new_connections_LIST.clear()
 
             # checking if any connections got disconnected while chatting
-            def check_disconnected_clients(dl):
-                dl = list(set(dl))
+            def check_disconnected_clients(disconnectedlist):
+                dl = list(set(disconnectedlist))  # removing duplicates from list
                 for i in clients_names_LIST:
                     for j in dl:
                         if i.connection == j:
@@ -181,12 +180,15 @@ else:
             def kill_bot_connection(m):
                 for i in clients_names_LIST:
                     if i.botname in m:
+                        i.connection.close()
                         clients_connections_LIST.remove(i.connection)
 
             # thread for the server input and sending of info to clients
             def server_thread():
                 i = 0
                 while 1:
+                    if len(new_connections_LIST) > 0:
+                        check_for_new_connections()
                     if len(clients_connections_LIST) > 0:
                         try:
                             # checking for new and disconnected clients
@@ -215,6 +217,8 @@ else:
                                 # if user says bye to a specific bot
                                 if "bye" in msg:
                                     kill_bot_connection(msg)
+                                    if len(disconnected_LIST) > 0:
+                                        check_disconnected_clients(disconnected_LIST)
 
                                 # wait for all bots to send their message back to server
                                 time.sleep(2)
@@ -229,12 +233,12 @@ else:
                             check_disconnected_clients(disconnected_LIST)
 
                         # If no chatbots are connected, give user a message about this.
-                        if i == 1:
+                        if i == 0:
                             print("Please wait for a chatbot to connect ...")
                         time.sleep(5)
                         i += 1
 
-                        # If no chatbot connects in the next 30secs, close server socket.
+                        # If no chatbot connects in the next 40secs, close server socket.
                         if i == 8:
                             print("Sorry, no chatbots available. Please try again later.")
                             server_socket.close()

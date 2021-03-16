@@ -59,6 +59,7 @@ else:
         botname = bot.encode('utf-8')
         client_socket.send(bytes(botname))
 
+
         def joan(action, greeting):
             string = ""
             greetings_response = ["howdy ", "Hi there fellow humanbeing! ", "holla! ",
@@ -85,26 +86,29 @@ else:
         def joker(action):
             jokes_list = ["All the children were planned, except Jake. His parents made a mistake ;)",
                           "All the children got to have cake, except Jake. His mother forgot to bake ;)",
-                          "I don't know anymore jokes"]
+                          "I don't know anymore jokes :("]
 
             if action == "joke":
                 string = random.choice(jokes_list)
                 print("[Haha, I am so funny]")
 
             else:
-                string = "I don't want to talk about anything else but jokes. " \
-                         "So just ask me to tell a joke"
+                string = "I don't want to talk about anything else but jokes. "
 
             return string
 
 
-        def jake(action):
+        def jake(action, bad_act):
             random_strings = ["I'm Jake", "I am Jake", "You are not Jake", "Jake is my favorite word"]
             string = random.choice(random_strings)
 
             if action == "joke":
                 string = "Please don't ask Joker to tell a joke, he is so mean to me :("
                 print("[I need to find som jokes about Joker ASAP]")
+
+            if bad_act != "":
+                string = bad_act + " you say?? I would love to do that to Joker."
+
             return string
 
 
@@ -119,11 +123,10 @@ else:
             suggestions = random.choice(actions_suggestions)
 
             string += "Could we rather " + str(suggestions) + "?"
-
             return string
 
 
-        def bots_all(action, greeting):
+        def bots_all(action, greeting, bad_act):
             string = ""
 
             if bot == "joan":
@@ -133,7 +136,7 @@ else:
                 string = joker(action)
 
             elif bot == "jake":
-                string = jake(action)
+                string = jake(action, bad_act)
 
             elif bot == "jimmy":
                 string = jimmy(action)
@@ -143,16 +146,19 @@ else:
 
         def analyze(userinput):
             userinput = userinput.lower()
-            print(username)
 
             action = ""
             greeting = ""
+            bad_action = ""
 
-            greetings_input = ["hi", "hello", "hey", "what\'s up", "how are you"]
+            greetings_input = ["hi", "hello", "hey", "what\'s up", "how are you",
+                               "good morning", "good evening", "good afternoon"]
 
             # making a list of actions that chatbots understand
             actions_input = ["sing", "ask", "create", "drive", "explore", "find", "help",
                              "jog", "walk", "work", "call", "make", "use", "joke"]
+
+            bad_actions_input = ["hate", "kill", "spit", "break", "sabotage"]
 
             # finding if there is a greeting
             for g in greetings_input:
@@ -160,23 +166,29 @@ else:
                     greeting = g
                     break
 
-            # finding the verb for what the user wants to do
+            # finding if the user asks about a nice action
             for a in actions_input:
                 if a in userinput:
                     action = a
                     break
 
-            # finding response from bot present
-            string = bots_all(action, greeting)
+            # finding if the user asks about a nice action
+            for a in bad_actions_input:
+                if a in userinput:
+                    bad_action = a
+                    break
 
-            # returning suggested action and bots name
+            # finding response from bot connected
+            string = bots_all(action, greeting, bad_action)
+
+            # returning suggested action
             return string
 
 
         # in a loop as long as server(user) is online/ until they say bye
         while True:
             # string equal to what is printed when a new client connects
-            new_connection_info = "New chatbot connected from:"
+            new_connection_info = "chatbot connected from:"
 
             # data saves what the user is asking about
             data = client_socket.recv(1024)
@@ -203,8 +215,7 @@ else:
                         print(name + ": " + msg)
 
                         # if user said goodbye to the chatbot, we end the connection
-                        goodbye = "bye " + str(bot)
-                        if msg == goodbye:
+                        if "bye" in msg and str(bot) in msg:
                             time.sleep(1)
                             client_socket.close()
 
