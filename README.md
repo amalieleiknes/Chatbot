@@ -1,3 +1,5 @@
 # Chatbot
 
-Kun en server kan kjøre om gangen, men flere klienter kan koble seg opp mot serveren med ulike bots.
+This is a chatbot-application that can be run through the terminal.
+
+The server can only have one instance running, but there may be several clients connected to the server simultaneously.
